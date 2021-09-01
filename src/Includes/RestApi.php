@@ -32,9 +32,19 @@ class RestApi
 			'callback' => [$this, 'handler_post_delete'],
 			'permission_callback' => [ $this, 'permissions_check' ],
 		]);
-	}
 
-	// endpoint (route) for show all posts
+		register_rest_route($name_space, '/project/(?P<id>\d+)', [
+			'methods' => 'POST',
+			'callback' => [$this, 'handler_post_update'],
+			'permission_callback' => [ $this, 'permissions_check' ],
+		]);
+
+		register_rest_route($name_space, '/project/create', [
+			'methods' => 'POST',
+			'callback' => [$this, 'handler_post_create'],
+			'permission_callback' => [ $this, 'permissions_check' ],
+		]);
+	}
 
 	/**
 	 * Endpoint (route) to receive all posts
@@ -90,7 +100,7 @@ class RestApi
 		$message = ['ok' => 'post deleted'];
 		$status = 200;
 
-		if( ! wp_delete_post( $post->ID, false ) ) {
+		if( ! wp_trash_post( $post->ID ) ) {
 			$message = ['error' => 'Failed to delete server error.'];
 			$status = 501;
 		}
@@ -99,12 +109,51 @@ class RestApi
 
 	}
 
+	/**
+	 * Endpoint (route) to update ane post by id
+	 * @param \WP_REST_Request $request
+	 * @return \WP_Error|\WP_REST_Response
+	 */
+	public function handler_post_update( \WP_REST_Request $request)
+	{
+
+
+
+	}
+
+	/**
+	 * Endpoint (route) to create new post
+	 * @param \WP_REST_Request $request
+	 * @return \WP_Error|\WP_REST_Response
+	 */
+	public function handler_post_create( \WP_REST_Request $request )
+	{
+
+		$data = get_post((int)$request['id']);
+
+		if (empty($post) || $post->post_type != 'tangram_project') {
+			return new \WP_Error('no_project_post', 'Записей не найдено', ['status' => 404]);
+		}
+
+		$message = ['ok' => 'post deleted'];
+		$status = 200;
+		
+
+		return new \WP_REST_Response($message, $status);
+
+	}
+
+	/**
+	 * Check user premissions
+	 * @param $request
+	 * @return bool|\WP_Error
+	 */
 	public function permissions_check( $request ){
 		$possibility = 'read';
 		switch ( $request->get_method() ) {
 
 			case 'POST':
-				$possibility = 'read';
+				$possibility = 'edit_posts';
 				break;
 
 			case 'GET':
@@ -117,13 +166,11 @@ class RestApi
 		}
 
 		if ( ! current_user_can( $possibility ) )
-			return new \WP_Error( 'rest_forbidden', esc_html__( 'You cannot view the post resource.' ), [ 'status' => $this->error_status_code() ] );
+			return new \WP_Error( 'rest_forbidden',
+				esc_html__( 'You cannot access to this resource.' ),
+				[ 'status' => is_user_logged_in() ? 403 : 401 ] );
 
 		return true;
-	}
-
-	public function error_status_code(){
-		return is_user_logged_in() ? 403 : 401;
 	}
 
 }
