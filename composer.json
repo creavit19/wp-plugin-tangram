@@ -1,0 +1,14 @@
+{
+    "name": "iv/tangram-projects",
+    "autoload": {
+        "psr-4": {
+            "Tangram\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Volodymyr Ilinskyi",
+            "email": "volodymyr.ilinskyi@tangramltd.com"
+        }
+    ]
+}
