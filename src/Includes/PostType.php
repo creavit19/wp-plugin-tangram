@@ -101,7 +101,7 @@ class PostType
 			//'capabilities'      => 'post', // an array of additional permissions for this post type
 			//'map_meta_cap'      => null, // Set to true to enable the default special rights handler
 			'hierarchical'        => false,
-			'supports'            => [ 'title', 'editor', 'thumbnail'], // 'title','editor','author','thumbnail','excerpt','trackbacks','custom-fields','comments','revisions','page-attributes','post-formats'
+			'supports'            => [ 'title', 'editor', 'thumbnail' ], // 'title','editor','author','thumbnail','excerpt','trackbacks','custom-fields','comments','revisions','page-attributes','post-formats'
 			'taxonomies'          => ['project_categories'],
 			'has_archive'         => true,
 			'rewrite'             => true,

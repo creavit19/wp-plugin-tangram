@@ -9,9 +9,13 @@ class RestApi
 	public function __construct($set)
 	{
 		$this->set = $set;
+
+		// add_action( 'rest_api_init', [$this, 'custom_field']);
+
 		add_action('rest_api_init', [$this, 'routes']);
-		add_action( 'rest_api_init', [$this, 'add_custom_rest_fields']);
+
 		add_action( 'save_post', [$this, 'update_post_project'] );
+
 	}
 
 	public function routes()
@@ -48,6 +52,7 @@ class RestApi
 		]);
 	}
 
+	/*
 	public function add_custom_rest_fields() {
 		register_rest_field(
 			'tangram_project',
@@ -61,9 +66,16 @@ class RestApi
 	}
 
 	public function get_field_data( $object, $field_name, $request ) {
-		return 45454;
-		//return get_post_meta( $object[(int)$request['id']], $field_name, true );
+
+		return get_post_meta( $object[(int)$request['id']], $field_name, true );
 	}
+
+	public function custom_field() {
+		register_rest_field('tangram_project', 'project_r_date', [
+			error_log('rest_api_init action has fired')
+		]);
+	}
+	*/
 
 	/**
 	 * Endpoint (route) to receive all posts
@@ -72,7 +84,7 @@ class RestApi
 	 */
 	public function handler_all_posts(\WP_REST_Request $request)
 	{
-		
+
 		$posts = get_posts([
 			'post_type' => 'tangram_project',
 			'nopaging' => true,
