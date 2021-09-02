@@ -18,31 +18,31 @@ class RestApi
 		register_rest_route($name_space, '/projects/', [
 			'methods' => 'GET',
 			'callback' => [$this, 'handler_all_posts'],
-			'permission_callback' => [ $this, 'permissions_check' ],
+			'permission_callback' => [$this, 'permissions_check'],
 		]);
 
 		register_rest_route($name_space, '/project/(?P<id>\d+)', [
 			'methods' => 'GET',
 			'callback' => [$this, 'handler_post'],
-			'permission_callback' => [ $this, 'permissions_check' ],
+			'permission_callback' => [$this, 'permissions_check'],
 		]);
 
 		register_rest_route($name_space, '/project/(?P<id>\d+)', [
 			'methods' => 'DELETE',
 			'callback' => [$this, 'handler_post_delete'],
-			'permission_callback' => [ $this, 'permissions_check' ],
+			'permission_callback' => [$this, 'permissions_check'],
 		]);
 
 		register_rest_route($name_space, '/project/(?P<id>\d+)', [
 			'methods' => 'POST',
 			'callback' => [$this, 'handler_post_update'],
-			'permission_callback' => [ $this, 'permissions_check' ],
+			'permission_callback' => [$this, 'permissions_check'],
 		]);
 
 		register_rest_route($name_space, '/project/create', [
 			'methods' => 'POST',
 			'callback' => [$this, 'handler_post_create'],
-			'permission_callback' => [ $this, 'permissions_check' ],
+			'permission_callback' => [$this, 'permissions_check'],
 		]);
 	}
 
@@ -51,7 +51,7 @@ class RestApi
 	 * @param $request
 	 * @return int[]|\WP_Error|\WP_Post[]
 	 */
-	public function handler_all_posts( \WP_REST_Request $request)
+	public function handler_all_posts(\WP_REST_Request $request)
 	{
 
 		$posts = get_posts([
@@ -71,7 +71,7 @@ class RestApi
 	 * @param \WP_REST_Request $request
 	 * @return int[]|\WP_Error|\WP_Post[]
 	 */
-	public function handler_post( \WP_REST_Request $request)
+	public function handler_post(\WP_REST_Request $request)
 	{
 
 		$post = get_post((int)$request['id']);
@@ -88,7 +88,7 @@ class RestApi
 	 * @param \WP_REST_Request $request
 	 * @return \WP_Error|\WP_REST_Response
 	 */
-	public function handler_post_delete( \WP_REST_Request $request)
+	public function handler_post_delete(\WP_REST_Request $request)
 	{
 
 		$post = get_post((int)$request['id']);
@@ -100,7 +100,7 @@ class RestApi
 		$message = ['ok' => 'post deleted'];
 		$status = 200;
 
-		if( ! wp_trash_post( $post->ID ) ) {
+		if (!wp_trash_post($post->ID)) {
 			$message = ['error' => 'Failed to delete server error.'];
 			$status = 501;
 		}
@@ -114,9 +114,8 @@ class RestApi
 	 * @param \WP_REST_Request $request
 	 * @return \WP_Error|\WP_REST_Response
 	 */
-	public function handler_post_update( \WP_REST_Request $request)
+	public function handler_post_update(\WP_REST_Request $request)
 	{
-
 
 
 	}
@@ -126,18 +125,41 @@ class RestApi
 	 * @param \WP_REST_Request $request
 	 * @return \WP_Error|\WP_REST_Response
 	 */
-	public function handler_post_create( \WP_REST_Request $request )
+	public function handler_post_create(\WP_REST_Request $request)
 	{
+		$data = $request->get_params();
 
-		$data = get_post((int)$request['id']);
+		$post_data = [
+			'post_title' => sanitize_text_field($data['post_title']),
+			'post_name' => sanitize_text_field($data['post_name']),
+			'post_content' => $data['post_content'],
+			'post_status' => 'publish',
+			'post_author' => get_current_user_id(),
+			'post_type' => 'tangram_project',
+		];
 
-		if (empty($post) || $post->post_type != 'tangram_project') {
-			return new \WP_Error('no_project_post', 'Записей не найдено', ['status' => 404]);
+		// Inserting a record into the database
+		$post_id = wp_insert_post($post_data);
+
+		$message = ['ok' => 'post created', 'post_ID' => $post_id];
+		$status = 200;
+
+		if (empty($post_id)) {
+			$message = ['error' => 'Failed to add'];
+			$status = 501;
+			return new \WP_REST_Response($message, $status);
 		}
 
-		$message = ['ok' => 'post deleted'];
-		$status = 200;
-		
+		$terms_data = [];
+		$terms_data_sent = json_decode($data['project_categories']);
+
+		foreach ($terms_data_sent as $tax_name => $tax_id) {
+			if ($tax_id == term_exists($tax_name, 'project_categories')['term_id']) {
+				$terms_data[] = (int)$tax_id;
+			}
+		}
+
+		wp_set_post_terms($post_id, $terms_data, 'project_categories');
 
 		return new \WP_REST_Response($message, $status);
 
@@ -148,9 +170,10 @@ class RestApi
 	 * @param $request
 	 * @return bool|\WP_Error
 	 */
-	public function permissions_check( $request ){
+	public function permissions_check($request)
+	{
 		$possibility = 'read';
-		switch ( $request->get_method() ) {
+		switch ($request->get_method()) {
 
 			case 'POST':
 				$possibility = 'edit_posts';
@@ -165,10 +188,10 @@ class RestApi
 				break;
 		}
 
-		if ( ! current_user_can( $possibility ) )
-			return new \WP_Error( 'rest_forbidden',
-				esc_html__( 'You cannot access to this resource.' ),
-				[ 'status' => is_user_logged_in() ? 403 : 401 ] );
+		if (!current_user_can($possibility))
+			return new \WP_Error('rest_forbidden',
+				esc_html__('You cannot access to this resource.'),
+				['status' => is_user_logged_in() ? 403 : 401]);
 
 		return true;
 	}

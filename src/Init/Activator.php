@@ -8,7 +8,7 @@ class Activator
 		do_action('activation_' . TANGRAM_PROJECTS_NAME);
 		$terms = [
 			[
-				'term' => 'Wordpress',
+				'term' => 'WordPress',
 				'slug' => 'wordpress'
 			],
 			[
