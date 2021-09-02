@@ -10,6 +10,8 @@ class RestApi
 	{
 		$this->set = $set;
 		add_action('rest_api_init', [$this, 'routes']);
+		add_action( 'rest_api_init', [$this, 'add_custom_rest_fields']);
+		add_action( 'save_post', [$this, 'update_post_project'] );
 	}
 
 	public function routes()
@@ -46,6 +48,23 @@ class RestApi
 		]);
 	}
 
+	public function add_custom_rest_fields() {
+		register_rest_field(
+			'tangram_project',
+			'project_r_date',
+			[
+				'get_callback' => [$this, 'get_field_data'],
+				'update_callback' => null,
+				'schema' => null,
+			]
+		);
+	}
+
+	public function get_field_data( $object, $field_name, $request ) {
+		return 45454;
+		//return get_post_meta( $object[(int)$request['id']], $field_name, true );
+	}
+
 	/**
 	 * Endpoint (route) to receive all posts
 	 * @param $request
@@ -53,7 +72,7 @@ class RestApi
 	 */
 	public function handler_all_posts(\WP_REST_Request $request)
 	{
-
+		
 		$posts = get_posts([
 			'post_type' => 'tangram_project',
 			'nopaging' => true,
@@ -116,8 +135,59 @@ class RestApi
 	 */
 	public function handler_post_update(\WP_REST_Request $request)
 	{
+		$data = $request->get_params();
+		$post = get_post((int)$request['id']);
+		$post_id = $post->ID;
 
+		$message = ['ok' => 'post updated'];
+		$status = 200;
 
+		if(empty($post) || $post->post_type != 'tangram_project') {
+			$message = ['error' => 'Post is empty'];
+			$status = 404;
+			return new \WP_REST_Response($message, $status);
+		}
+
+		$post_data = [
+			'ID' => $post->ID,
+			'post_title' => sanitize_text_field($data['post_title']),
+			'post_name' => sanitize_text_field($data['post_name']),
+			'post_content' => $data['post_content'],
+			'post_status' => 'publish',
+			'post_author' => get_current_user_id(),
+			'post_type' => 'tangram_project',
+		];
+
+		$this->update_post_project( $post_data );
+
+		$terms_data = [];
+		$terms_data_sent = json_decode($data['project_categories']);
+
+		foreach ($terms_data_sent as $tax_name => $tax_id) {
+			if ($tax_id == term_exists($tax_name, 'project_categories')['term_id']) {
+				$terms_data[] = (int)$tax_id;
+			}
+		}
+
+		wp_set_post_terms($post_id, $terms_data, 'project_categories');
+
+		return new \WP_REST_Response($message, $status);
+	}
+
+	/**
+	 * @param $post_data
+	 */
+	public function update_post_project( $post_data ){
+		if ( ! wp_is_post_revision( $post_data['ID'] ) ){
+			// удаляем этот хук, чтобы он не создавал бесконечного цикла
+			remove_action('save_post', [$this, 'update_post_project']);
+
+			// обновляем пост, когда снова вызовется хук save_post
+			wp_update_post( $post_data );
+
+			// снова вешаем хук
+			add_action('save_post', [$this, 'update_post_project']);
+		}
 	}
 
 	/**
@@ -138,8 +208,12 @@ class RestApi
 			'post_type' => 'tangram_project',
 		];
 
+		remove_action('save_post', [$this, 'update_post_project']);
+
 		// Inserting a record into the database
 		$post_id = wp_insert_post($post_data);
+
+		add_action('save_post', [$this, 'update_post_project']);
 
 		$message = ['ok' => 'post created', 'post_ID' => $post_id];
 		$status = 200;
