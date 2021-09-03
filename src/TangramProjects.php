@@ -7,6 +7,7 @@ use Tangram\Includes\BasicAuth;
 use Tangram\Includes\MetaBoxs;
 use Tangram\Includes\PostType;
 use Tangram\Includes\RestApi;
+use Tangram\Includes\Localization;
 
 class TangramProjects
 {
@@ -40,6 +41,11 @@ class TangramProjects
 	public function enableBasicAuth()
 	{
 		new BasicAuth();
+	}
+
+	public function enableLocale()
+	{
+		new Localization($this->set);
 	}
 
 }

@@ -57,6 +57,7 @@ function run_tangram_projects_plugin()
 	$plugin->createMetaBox();
 	$plugin->enableBasicAuth();
 	$plugin->addRestApi();
+	$plugin->enableLocale();
 }
 
 run_tangram_projects_plugin();
