@@ -3,7 +3,7 @@
 	<?php
 
 	// Load all values of form elements
-	$options = get_option($plugin_name, array('catalog' => ''));
+	$options = get_option($plugin_name, ['catalog' => '']);
 	// Current state of options
 	$catalog = $options['catalog'];
 

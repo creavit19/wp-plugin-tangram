@@ -2,14 +2,18 @@
 namespace Tangram\Helpers;
 
 class MetaBox {
-	function __construct($options) {
+
+	public $options;
+	public $prefix;
+
+	public function __construct($options) {
 		$this->options = $options;
 		$this->prefix = $this->options['id'] .'_';
-		add_action( 'add_meta_boxes', array( &$this, 'create' ) );
-		add_action( 'save_post', array( &$this, 'save' ), 1, 2 );
+		add_action( 'add_meta_boxes', [ &$this, 'create' ] );
+		add_action( 'save_post', [ &$this, 'save' ], 1, 2 );
 	}
 
-	function create() {
+	public function create() {
 		foreach ($this->options['post'] as $post_type) {
 			if (current_user_can( $this->options['cap'])) {
 				add_meta_box(
@@ -24,7 +28,7 @@ class MetaBox {
 		}
 	}
 
-	function fill(){
+	public function fill(){
 		global $post; $p_i_d = $post->ID;
 		wp_nonce_field( $this->options['id'], $this->options['id'].'_wpnonce', false, true );
 		?>
@@ -91,7 +95,7 @@ class MetaBox {
 		?></tbody></table><?php
 	}
 
-	function save($post_id, $post){
+	public function save($post_id, $post){
 		if ( empty($_POST[ $this->options['id'].'_wpnonce' ]) ) return;
 		if ( !wp_verify_nonce( $_POST[ $this->options['id'].'_wpnonce' ], $this->options['id'] ) ) return;
 		if ( !current_user_can( 'edit_post', $post_id ) ) return;
@@ -106,4 +110,5 @@ class MetaBox {
 			}
 		}
 	}
+
 }

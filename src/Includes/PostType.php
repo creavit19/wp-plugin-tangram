@@ -102,7 +102,7 @@ class PostType
 			//'map_meta_cap'      => null, // Set to true to enable the default special rights handler
 			'hierarchical'        => false,
 			'supports'            => [ 'title', 'editor', 'thumbnail' ], // 'title','editor','author','thumbnail','excerpt','trackbacks','custom-fields','comments','revisions','page-attributes','post-formats'
-			'taxonomies'          => ['project_categories'],
+			'taxonomies'          => [ 'project_categories' ],
 			'has_archive'         => true,
 			'rewrite'             => true,
 			'query_var'           => true,
@@ -113,7 +113,7 @@ class PostType
 	 * Adds image support
 	 */
 	public function add_image_support(){
-		add_theme_support( 'post-thumbnails', array( 'tangram_project' ) );
+		add_theme_support( 'post-thumbnails', [ 'tangram_project' ] );
 	}
 
 	/**

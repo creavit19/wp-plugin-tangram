@@ -9,8 +9,19 @@ use Tangram\Helpers\View;
  */
 class AdminSetupPage
 {
+
+	/**
+	 * Plugin props set
+	 * @var array	'plugin_name' => TANGRAM_PROJECTS_NAME,
+	 *				'plugin_version' => '1.0.0',
+	 *				'text_domain' => 'tangram_projects'
+	 */
 	public $set;
 
+	/**
+	 * Adds hook handlers
+	 * @param array $set
+	 */
 	public function __construct($set)
 	{
 		$this->set = $set;
@@ -26,16 +37,18 @@ class AdminSetupPage
 	public function add_plugin_admin_menu()
 	{
 		add_options_page(
-			'Tangram Projects and Base Options Functions Setup',
-			'Tangram Projects',
+			__('Tangram Projects Options Setup', $this->set['text_domain']),
+			__('Tangram Projects', $this->set['text_domain']),
 			'manage_options',
 			$this->set['plugin_name'],
-			array($this, 'display_plugin_setup_page')
+			[ $this, 'display_plugin_setup_page' ]
 		);
 	}
 
 	/**
 	 * Add settings action link to the plugins page.
+	 * @param $links
+	 * @return array|string[]
 	 */
 	public function add_action_links($links)
 	{
@@ -56,10 +69,12 @@ class AdminSetupPage
 
 	/**
 	 * Validate options
+	 * @param $input
+	 * @return array
 	 */
 	public function validate($input)
 	{
-		$valid = array();
+		$valid = [];
 		$valid['catalog'] = (isset($input['catalog']) && !empty($input['catalog'])) ? $input['catalog'] : '';
 		return $valid;
 	}

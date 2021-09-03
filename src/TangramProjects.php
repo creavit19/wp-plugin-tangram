@@ -11,7 +11,9 @@ use Tangram\Includes\RestApi;
 class TangramProjects
 {
 	protected $set;
-	public function __construct($set){
+
+	public function __construct($set)
+	{
 		$this->set = $set;
 	}
 
@@ -39,4 +41,5 @@ class TangramProjects
 	{
 		new BasicAuth();
 	}
+
 }

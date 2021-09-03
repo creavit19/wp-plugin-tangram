@@ -4,78 +4,67 @@ namespace Tangram\Includes;
 
 class RestApi
 {
-	public $set;
+	/**
+	 * Plugin props set
+	 * @var array	'plugin_name' => TANGRAM_PROJECTS_NAME,
+	 *				'plugin_version' => '1.0.0',
+	 *				'text_domain' => 'tangram_projects'
+	 */
+	public array $set;
 
-	public function __construct($set)
+	private string $error404;
+	private string $error501;
+
+	/**
+	 * Adds hook handlers
+	 * @param array $set
+	 */
+	public function __construct(array $set)
 	{
 		$this->set = $set;
-
-		// add_action( 'rest_api_init', [$this, 'custom_field']);
-
 		add_action('rest_api_init', [$this, 'routes']);
-
-		add_action( 'save_post', [$this, 'update_post_project'] );
-
+		add_action('save_post', [$this, 'update_post_project']);
+		$this->error404 = "new \WP_Error('no_posts', __('No records found', " . $this->set['text_domain'] . "), ['status' => 404])";
+		$this->error501 = "new \WP_Error('server_error', __('Internal server error', " . $this->set['text_domain'] . "), ['status' => 501])";
 	}
 
+	/**
+	 * Describes routes
+	 */
 	public function routes()
 	{
 		$name_space = 'tangram/v1';
+		$per_check = [$this, 'permissions_check'];
 		register_rest_route($name_space, '/projects/', [
 			'methods' => 'GET',
 			'callback' => [$this, 'handler_all_posts'],
-			'permission_callback' => [$this, 'permissions_check'],
+			'permission_callback' => $per_check,
 		]);
 
 		register_rest_route($name_space, '/project/(?P<id>\d+)', [
 			'methods' => 'GET',
 			'callback' => [$this, 'handler_post'],
-			'permission_callback' => [$this, 'permissions_check'],
+			'permission_callback' => $per_check,
 		]);
 
 		register_rest_route($name_space, '/project/(?P<id>\d+)', [
 			'methods' => 'DELETE',
 			'callback' => [$this, 'handler_post_delete'],
-			'permission_callback' => [$this, 'permissions_check'],
+			'permission_callback' => $per_check,
 		]);
 
 		register_rest_route($name_space, '/project/(?P<id>\d+)', [
 			'methods' => 'POST',
 			'callback' => [$this, 'handler_post_update'],
-			'permission_callback' => [$this, 'permissions_check'],
+			'permission_callback' => $per_check,
 		]);
 
 		register_rest_route($name_space, '/project/create', [
 			'methods' => 'POST',
 			'callback' => [$this, 'handler_post_create'],
-			'permission_callback' => [$this, 'permissions_check'],
+			'permission_callback' => $per_check,
 		]);
 	}
-
-	/*
-	public function add_custom_rest_fields() {
-		register_rest_field(
-			'tangram_project',
-			'project_r_date',
-			[
-				'get_callback' => [$this, 'get_field_data'],
-				'update_callback' => null,
-				'schema' => null,
-			]
-		);
-	}
-
-	public function get_field_data( $object, $field_name, $request ) {
-
-		return get_post_meta( $object[(int)$request['id']], $field_name, true );
-	}
-
-	public function custom_field() {
-		register_rest_field('tangram_project', 'project_r_date', [
-			error_log('rest_api_init action has fired')
-		]);
-	}
-	*/
 
 	/**
 	 * Endpoint (route) to receive all posts
@@ -84,14 +73,13 @@ class RestApi
 	 */
 	public function handler_all_posts(\WP_REST_Request $request)
 	{
-
 		$posts = get_posts([
 			'post_type' => 'tangram_project',
 			'nopaging' => true,
 		]);
 
 		if (empty($posts)) {
-			return new \WP_Error('no_posts', 'Записей не найдено', ['status' => 404]);
+			return eval($this->error404);
 		}
 
 		return $posts;
@@ -104,11 +92,10 @@ class RestApi
 	 */
 	public function handler_post(\WP_REST_Request $request)
 	{
-
 		$post = get_post((int)$request['id']);
 
 		if (empty($post) || $post->post_type != 'tangram_project') {
-			return new \WP_Error('no_project_post', 'Записей не найдено', ['status' => 404]);
+			return eval($this->error404);
 		}
 
 		return $post;
@@ -121,23 +108,24 @@ class RestApi
 	 */
 	public function handler_post_delete(\WP_REST_Request $request)
 	{
-
 		$post = get_post((int)$request['id']);
 
 		if (empty($post) || $post->post_type != 'tangram_project') {
-			return new \WP_Error('no_project_post', 'Записей не найдено', ['status' => 404]);
+			return eval($this->error404);
 		}
 
 		$message = ['ok' => 'post deleted'];
 		$status = 200;
 
+		remove_action('save_post', [$this, 'update_post_project']);
+
 		if (!wp_trash_post($post->ID)) {
-			$message = ['error' => 'Failed to delete server error.'];
-			$status = 501;
+			return eval($this->error501);
 		}
 
-		return new \WP_REST_Response($message, $status);
+		add_action('save_post', [$this, 'update_post_project']);
 
+		return new \WP_REST_Response($message, $status);
 	}
 
 	/**
@@ -154,10 +142,8 @@ class RestApi
 		$message = ['ok' => 'post updated'];
 		$status = 200;
 
-		if(empty($post) || $post->post_type != 'tangram_project') {
-			$message = ['error' => 'Post is empty'];
-			$status = 404;
-			return new \WP_REST_Response($message, $status);
+		if (empty($post) || $post->post_type != 'tangram_project') {
+			return eval($this->error404);
 		}
 
 		$post_data = [
@@ -170,7 +156,7 @@ class RestApi
 			'post_type' => 'tangram_project',
 		];
 
-		$this->update_post_project( $post_data );
+		$this->update_post_project($post_data);
 
 		$terms_data = [];
 		$terms_data_sent = json_decode($data['project_categories']);
@@ -187,17 +173,15 @@ class RestApi
 	}
 
 	/**
+	 * Safely updates the post data
 	 * @param $post_data
 	 */
-	public function update_post_project( $post_data ){
-		if ( ! wp_is_post_revision( $post_data['ID'] ) ){
-			// удаляем этот хук, чтобы он не создавал бесконечного цикла
+	public function update_post_project($post_data)
+	{
+		if(is_admin()) return;  // If the post is updated from the admin panel: exit
+		if (!wp_is_post_revision($post_data['ID'])) {
 			remove_action('save_post', [$this, 'update_post_project']);
-
-			// обновляем пост, когда снова вызовется хук save_post
-			wp_update_post( $post_data );
-
-			// снова вешаем хук
+			wp_update_post($post_data);
 			add_action('save_post', [$this, 'update_post_project']);
 		}
 	}
@@ -231,9 +215,7 @@ class RestApi
 		$status = 200;
 
 		if (empty($post_id)) {
-			$message = ['error' => 'Failed to add'];
-			$status = 501;
-			return new \WP_REST_Response($message, $status);
+			return eval($this->error501);
 		}
 
 		$terms_data = [];
@@ -248,15 +230,14 @@ class RestApi
 		wp_set_post_terms($post_id, $terms_data, 'project_categories');
 
 		return new \WP_REST_Response($message, $status);
-
 	}
 
 	/**
-	 * Check user premissions
+	 * Check user permissions
 	 * @param $request
 	 * @return bool|\WP_Error
 	 */
-	public function permissions_check($request)
+	public function permissions_check(\WP_REST_Request $request)
 	{
 		$possibility = 'read';
 		switch ($request->get_method()) {
@@ -275,9 +256,9 @@ class RestApi
 		}
 
 		if (!current_user_can($possibility))
-			return new \WP_Error('rest_forbidden',
-				esc_html__('You cannot access to this resource.'),
-				['status' => is_user_logged_in() ? 403 : 401]);
+			return new \WP_Error('permission_denied',
+							__('You cannot access to this resource.'),
+							['status' => is_user_logged_in() ? 403 : 401]);
 
 		return true;
 	}

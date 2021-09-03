@@ -2,7 +2,6 @@
 
 namespace Tangram\Includes;
 
-
 use Tangram\Helpers\MetaBox;
 
 /**
@@ -29,7 +28,7 @@ class MetaBoxs
 						'id'			=>	'r_date',
 						'title'			=>	__('Release date', $this->set['text_domain']),
 						'type'			=>	'date', // тип
-						'placeholder'		=>	__('Enter date', $this->set['text_domain']),
+						'placeholder'	=>	__('Enter date', $this->set['text_domain']),
 						'desc'			=>	'',
 						'cap'			=>	'edit_posts'
 					],
@@ -37,7 +36,7 @@ class MetaBoxs
 						'id'			=>	'p_link',
 						'title'			=>	__('Link to project', $this->set['text_domain']),
 						'type'			=>	'text',
-						'placeholder'		=>	__('Enter link', $this->set['text_domain']),
+						'placeholder'	=>	__('Enter link', $this->set['text_domain']),
 						'desc'			=>	'',
 						'cap'			=>	'edit_posts'
 					]
