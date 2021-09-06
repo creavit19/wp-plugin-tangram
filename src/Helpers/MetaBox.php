@@ -1,4 +1,8 @@
 <?php
+/**
+ * Author URI: https://misha.agency/wordpress/meta-boxes.html
+ */
+
 namespace Tangram\Helpers;
 
 class MetaBox {

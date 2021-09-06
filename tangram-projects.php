@@ -8,12 +8,16 @@
  * registers the activation and deactivation functions, and defines a function
  * that starts the plugin.
  *
- * @link              https://tangram.ua
+ * @link              https://github.com/creavit19
  * @since             1.0.0
  * @package           Tangram_projects
  *
  * @wordpress-plugin
  * Plugin Name:       Tangram Projects
+ * Author: Volodymyr Ilinskyi
+ * Author URI: https://github.com/creavit19
+ * Author email: creavit@i.ua
+ * Plugin URI: https://github.com/creavit19/wp-plugin-tangram
  */
 
 require __DIR__ . '/vendor/autoload.php';

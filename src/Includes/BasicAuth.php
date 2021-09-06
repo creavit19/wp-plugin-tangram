@@ -1,4 +1,9 @@
 <?php
+/**
+ * Author: WordPress API Team
+ * Author URI: https://github.com/WP-API
+ * Plugin URI: https://github.com/WP-API/Basic-Auth
+ */
 
 namespace Tangram\Includes;
 
